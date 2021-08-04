@@ -4,26 +4,27 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import matplotlib.colors as mcolors
 import locale #ponto->virgula
+from os import getcwd as path
 
-#load files
-passaro, sr = librosa.load('passarinho.ogg')
+print('aqui v \n')
+print(path())
+print('aqui ^')
+#load files 
+passaro, sr = librosa.load('passarinho.ogg') #change to audioread to avoid warnings [todo]
 bicoChato, sr1 = librosa.load('bico-chato-amarelo.mp3')
 sanhacu, sr2 = librosa.load('sanhacu-da-amazonia.mp3') #sr=22050
 
-
 #time vectors
 def timeVector(sinal, sr):
-# timePassaro = np.arange(0, len(passaro)/sr, 1/sr)
-# timeBicoChato = np.arange(0, len(bicoChato)/sr1, 1/sr1)
-# timeSanhacu = np.arange(0, len(sanhacu)/sr2, 1/sr2)
     timeVector = np.arange(0, len(sinal)/sr, 1/sr)
     return timeVector
 
+#Calculates STFT amplitude in dB
 def stft_dB(sinal,sr,n_fft=2048,win_length=2048,hop_length=512):
     D = np.abs(librosa.stft(sinal,  #stft 
                             n_fft,
-                            win_length,))
-                           # hop_length,))
+                            win_length))
+                            #hop_length))
                             #window=signal.windows.gaussian(win_length,95)))
                                           
     DB = librosa.amplitude_to_db(D, ref=np.max) #dB normalizado   
@@ -44,6 +45,7 @@ def stft_dB(sinal,sr,n_fft=2048,win_length=2048,hop_length=512):
 
 
 def ponto_por_virgula(ax,colorbar=False):   
+    """Troca pontos do eixo de um gráfico por vírgula. """
     ticks = []
     xticks = ax.get_xticks(minor=False)
     
@@ -56,7 +58,11 @@ def ponto_por_virgula(ax,colorbar=False):
 
 
 def plot(sinal,sr,legenda='Pássaro 1'):
-
+    """Plota o sinal no tempo e seu espectrograma.
+    sinal: numpy.ndarray
+    sr: int
+    """
+    # Redefine plot quality; trying to change decimal character[.=>,](DE=deutsch)
     plt.rcdefaults()
     locale.setlocale(locale.LC_NUMERIC, "de_DE") #needs import locale
     plt.rcParams['axes.formatter.use_locale'] = True
@@ -80,9 +86,8 @@ def plot(sinal,sr,legenda='Pássaro 1'):
     #grafico 2 - spectrograma
     ax2 = fig.add_subplot(gs[1,0])
 
-    ax2 = stft_dB(sinal,sr) #,n_fft,win_length,hop_length)
-    print(type(ax2))
-    plt.colorbar(ax=ax2,
+    ax2 = stft_dB(sinal,sr,n_fft=2**12,win_length=2**8)
+    plt.colorbar(ax2,
                 #orientation='horizontal',
                 #cax = cbaxes,
                 format='%+2.0f dB',
@@ -90,14 +95,22 @@ def plot(sinal,sr,legenda='Pássaro 1'):
                 anchor=(0,10),
                 fraction=0.025)
 
-    ponto_por_virgula(ax2,colorbar=True) #ponto por vírgula
+    #ponto_por_virgula(ax2,colorbar=True) #AttributeError: 'QuadMesh' object has no attribute 'get_xticks'
     plt.ylabel('Frequência [Hz]') 
     plt.xlabel('Tempo [s]')
     plt.ylim([0,9000])
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    plt.show() #end
+    # plt.suptitle('{}'.format(frase),fontsize=15)
+    # plt.tight_layout(rect=[0, 0.03, 1, 0.95]) #tight layout doesn't take into account suptitle
+    
+    #plt.savefig(path()+'\\'+legenda+'.pdf')#criar uma pasta pras figs?
+    plt.show()#block=False) #end
 
 
 
+######## PLOTS (1) - Tempo [s] e Espectrograma [s, Hz]
 plot(passaro, sr, 'Pássaro desconhecido')
+plot(bicoChato, sr1, 'Bico-Chato Amarelo')
+plot(sanhacu, sr2, 'Sanhacu da Amazônia')
+
